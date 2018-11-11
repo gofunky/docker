@@ -110,9 +110,7 @@ commands:
           command: << parameters.login >>
   build:
     parameters:
-      <<: *docker_arg_params
-      <<: *attach_params
-      <<: *docker_build_params
+      <<: [*docker_arg_params, *attach_params, *docker_build_params]
     steps:
       - checkout
       - setup_remote_docker
@@ -248,10 +246,7 @@ jobs:
       name: default
       docker_version: << parameters.docker_version >>
     parameters:
-      <<: *docker_arg_params
-      <<: *attach_params
-      <<: *docker_build_params
-      <<: *docker_version_params
+      <<: [*docker_arg_params, *attach_params, *docker_build_params, *docker_version_params]
     steps:
       - build:
           <<: *docker_build_args
@@ -262,11 +257,7 @@ jobs:
       name: default
       docker_version: << parameters.docker_version >>
     parameters:
-      <<: *docker_arg_params
-      <<: *attach_params
-      <<: *docker_build_params
-      <<: *docker_tags_params
-      <<: *docker_version_params
+      <<: [*docker_arg_params, *attach_params, *docker_build_params, *docker_tags_params, *docker_version_params]
       compose:
         description: "Path to the docker compose test file to test"
         type: string
@@ -286,12 +277,7 @@ jobs:
       name: default
       docker_version: << parameters.docker_version >>
     parameters:
-      <<: *docker_arg_params
-      <<: *attach_params
-      <<: *docker_build_params
-      <<: *docker_tags_params
-      <<: *docker_version_params
-      <<: *docker_login_params
+      <<: [*docker_arg_params, *attach_params,  *docker_build_params, *docker_tags_params, *docker_version_params, *docker_login_params]
     steps:
       - build:
           <<: *docker_build_args
@@ -314,12 +300,7 @@ jobs:
       name: default
       docker_version: << parameters.docker_version >>
     parameters:
-      <<: *docker_arg_params
-      <<: *attach_params
-      <<: *docker_build_params
-      <<: *docker_tags_params
-      <<: *docker_version_params
-      <<: *docker_login_params
+      <<: [*docker_arg_params, *attach_params,  *docker_build_params, *docker_tags_params, *docker_version_params, *docker_login_params]
       compose:
         description: "Path to the docker compose test file to test"
         type: string
