@@ -1,0 +1,343 @@
+version: 2.1
+
+attach_params: &attach_params
+  attach:
+    description: "Attach workspace"
+    type: boolean
+    default: false
+  attach_at:
+    description: "Where to attach the workspace"
+    type: string
+    default: "."
+
+attach_args: &attach_args
+  attach: << parameters.attach >>
+  attach_at: << parameters.attach_at >>
+
+alpine_params: &alpine_params
+  alpine_version:
+    description: "Alpine version"
+    type: string
+    default: ""
+
+alpine_args: &alpine_args
+  alpine_version: << parameters.alpine_version >>
+
+docker_login_params: &docker_login_params
+  login:
+    description: "Login command to your repository (using environment variables from your secure context)"
+    type: string
+    default: echo "Login is UNSPECIFIED"
+
+docker_arg_params: &docker_arg_params
+  # Remove this once CircleCI-Public/config-preview-sdk#15 is merged
+  use_args:
+    description: "Enable if you pass args"
+    type: boolean
+    default: false
+  args:
+    description: "Either none, one or multiple comma-separated Docker build arguments to apply"
+    type: string
+    default: ""
+
+docker_build_params: &docker_build_params
+  file:
+    description: "Path to the Dockerfile"
+    type: string
+    default: "Dockerfile"
+  cache:
+    description: "Use image layer cache"
+    type: boolean
+    default: false
+  prepare:
+    description: "Prepare steps after checkout (e.g., chmod)"
+    type: steps
+    default: []
+  path:
+    description: "Build path"
+    type: string
+    default: "."
+  add_labels:
+    description: "Add default schema labels"
+    type: boolean
+    default: false
+  base_tag:
+    description: "Docker base tag to use"
+    type: string
+    default: app
+
+docker_tags_params: &docker_tags_params
+  tags:
+    description: "Either one or multiple comma-separated Docker tags to apply and push"
+    type: string
+    default: ""
+
+docker_build_args: &docker_build_args
+  <<: *attach_args
+  # Remove this once CircleCI-Public/config-preview-sdk#15 is merged
+  use_args: << parameters.use_args >>
+  args: << parameters.args >>
+  file: << parameters.file >>
+  cache: << parameters.cache >>
+  prepare: << parameters.prepare >>
+  path: << parameters.path >>
+  base_tag: << parameters.base_tag >>
+  add_labels: << parameters.add_labels >>
+
+docker_version_params: &docker_version_params
+  docker_version:
+    description: "Docker version"
+    type: string
+    default: stable
+
+executors:
+  default:
+    parameters:
+      <<: *docker_version_params
+    docker:
+      - image: docker:<< parameters.docker_version >>-git
+    working_directory: ~/app
+    environment:
+      IFS: ","
+
+commands:
+  login:
+    parameters:
+      <<: *docker_login_params
+    steps:
+      - run:
+          name: "Login to your origin Docker repository"
+          command: << parameters.login >>
+  build:
+    parameters:
+      <<: *docker_arg_params
+      <<: *attach_params
+      <<: *docker_build_params
+    steps:
+      - checkout
+      - setup_remote_docker
+      - run:
+          name: Check for submodules
+          command: |
+            if [ -e "./.gitmodules" ]; then
+              echo "Checking out detected submodules..."
+              git submodule sync
+              git submodule update --init
+            else
+              echo "SKIPPING..."
+            fi
+      - when:
+          condition: << parameters.attach >>
+          steps:
+            - attach_workspace:
+                at: << parameters.attach_at >>
+      - run:
+          name: Deploy envorb store
+          command: |
+            if [ ! -e "/usr/local/bin/envload" ]; then
+              echo "Installing envorb loader..."
+              wget -O /usr/local/bin/envload https://raw.githubusercontent.com/gofunky/orbs/master/envorb/load.sh
+              chmod +x /usr/local/bin/envload
+            fi
+      - steps: << parameters.prepare >>
+      - when:
+          condition: << parameters.cache >>
+          steps:
+            - restore_cache:
+                keys:
+                  - docker-<< parameters.path >>-<< parameters.file >>-<< parameters.base_tag >>-{{ .Branch }}
+                paths:
+                  - /caches/<< parameters.base_tag >>.tar
+            - run:
+                name: Load Docker image layer cache
+                command: |
+                  set +o pipefail
+                  docker load -i /caches/<< parameters.base_tag >>.tar || true
+      - when:
+          condition: << parameters.use_args >>
+          # Use this instead once CircleCI-Public/config-preview-sdk#15 is merged
+          # matches: ['([a-zA-Z][\w]*=[\w-\/.:]+)(,[a-zA-Z][\w]*=[\w-\/.:]+)*', "<< parameters.args >>"]
+          steps:
+            - run:
+                name: Build Docker image with arguments and labels
+                command: |
+                  source /usr/local/bin/envload
+                  buildarg=""
+                  args="<< parameters.args >><<# parameters.add_labels >>,BUILD_DATE=`date -u +\"%Y-%m-%dT%H:%M:%SZ\"`,VCS_REF=`git rev-parse --short HEAD`<</ parameters.add_labels >>"
+                  for arg in $args; do
+                    buildarg="${buildarg} --build-arg ${arg}"
+                  done
+                  build="docker build ${buildarg} --cache-from << parameters.base_tag >> -f << parameters.path >>/<< parameters.file >> -t << parameters.base_tag >> << parameters.path >>"
+                  eval $build
+      - unless:
+          condition: << parameters.use_args >>
+          # Use this instead once CircleCI-Public/config-preview-sdk#15 is merged
+          # matches: ['([a-zA-Z][\w]*=[\w-\/.:]+)(,[a-zA-Z][\w]*=[\w-\/.:]+)*', "<< parameters.args >>"]
+          steps:
+            - run:
+                name: Build Docker image without arguments and with labels
+                command: |
+                  source /usr/local/bin/envload
+                  docker build <<# parameters.add_labels >>--build-arg BUILD_DATE=`date -u +\"%Y-%m-%dT%H:%M:%SZ\"` --build-arg VCS_REF=`git rev-parse --short HEAD` <</ parameters.add_labels >>--cache-from << parameters.base_tag >> -f << parameters.path >>/<< parameters.file >> -t << parameters.base_tag >> << parameters.path >>
+      - when:
+          condition: << parameters.cache >>
+          steps:
+            - run:
+                name: Save Docker image layer cache
+                command: |
+                  mkdir -p /caches
+                  docker save -o /caches/<< parameters.base_tag >>.tar << parameters.base_tag >>
+            - save_cache:
+                key: docker-<< parameters.path >>-<< parameters.file >>-<< parameters.base_tag >>-{{ .Branch }}-{{ epoch }}
+                paths:
+                  - /caches/<< parameters.base_tag >>.tar
+  tag:
+    parameters:
+      <<: *docker_tags_params
+      base_tag:
+        description: "Docker base tag to use"
+        type: string
+        default: app
+    steps:
+      - run:
+          name: Add Docker tags
+          command: |
+            source /usr/local/bin/envload
+            tags="<< parameters.tags >>"
+            for tag in $tags; do
+              docker tag << parameters.base_tag >> "$tag"
+            done
+  test:
+    parameters:
+      compose:
+        description: "Path to the docker compose test file to test"
+        type: string
+        default: "docker-compose.test.yml"
+    steps:
+      - run:
+          name: Install Docker Compose
+          command: |
+            if [ ! -e "/usr/local/bin/docker-compose" ]; then
+              echo "Installing latest Docker Compose..."
+              apk add --no-cache py-pip
+              pip install docker-compose
+            else
+              echo "SKIPPING..."
+            fi
+      - run:
+          name: Run Docker compose tests
+          command: |
+            docker-compose -f "<< parameters.compose >>" up --exit-code-from sut --build --abort-on-container-exit
+  push:
+    parameters:
+      <<: *docker_tags_params
+    steps:
+      - deploy:
+          name: Push application Docker image
+          command: |
+            source /usr/local/bin/envload
+            tags="<< parameters.tags >>"
+            for tag in $tags; do
+              docker push "$tag"
+            done
+
+jobs:
+  build:
+    description: "Build Docker image"
+    executor:
+      name: default
+      docker_version: << parameters.docker_version >>
+    parameters:
+      <<: *docker_arg_params
+      <<: *attach_params
+      <<: *docker_build_params
+      <<: *docker_version_params
+    steps:
+      - build:
+          <<: *docker_build_args
+
+  build_test:
+    description: "Build Docker image"
+    executor:
+      name: default
+      docker_version: << parameters.docker_version >>
+    parameters:
+      <<: *docker_arg_params
+      <<: *attach_params
+      <<: *docker_build_params
+      <<: *docker_tags_params
+      <<: *docker_version_params
+      compose:
+        description: "Path to the docker compose test file to test"
+        type: string
+        default: "docker-compose.test.yml"
+    steps:
+      - build:
+          <<: *docker_build_args
+      - tag:
+          tags: << parameters.tags >>
+          base_tag: << parameters.base_tag >>
+      - test:
+          compose: << parameters.compose >>
+
+  build_push:
+    description: "Build and push Docker image"
+    executor:
+      name: default
+      docker_version: << parameters.docker_version >>
+    parameters:
+      <<: *docker_arg_params
+      <<: *attach_params
+      <<: *docker_build_params
+      <<: *docker_tags_params
+      <<: *docker_version_params
+      <<: *docker_login_params
+    steps:
+      - build:
+          <<: *docker_build_args
+      - when:
+          condition: true
+          # Use this instead once CircleCI-Public/config-preview-sdk#15 is merged
+          # matches: ['([\w-\/.:]+)?(,[\w-\/.:]+)*', "<< parameters.tags >>"]
+          steps:
+            - tag:
+                tags: << parameters.tags >>
+                base_tag: << parameters.base_tag >>
+            - login:
+                login: << parameters.login >>
+            - push:
+                tags: << parameters.tags >>
+
+  build_test_push:
+    description: "Build and push Docker image"
+    executor:
+      name: default
+      docker_version: << parameters.docker_version >>
+    parameters:
+      <<: *docker_arg_params
+      <<: *attach_params
+      <<: *docker_build_params
+      <<: *docker_tags_params
+      <<: *docker_version_params
+      <<: *docker_login_params
+      compose:
+        description: "Path to the docker compose test file to test"
+        type: string
+        default: "docker-compose.test.yml"
+    steps:
+      - build:
+          <<: *docker_build_args
+      - when:
+          condition: true
+          # Use this instead once CircleCI-Public/config-preview-sdk#15 is merged
+          # matches: ['([\w-\/.:]+)?(,[\w-\/.:]+)*', "<< parameters.tags >>"]
+          steps:
+            - tag:
+                tags: << parameters.tags >>
+                base_tag: << parameters.base_tag >>
+            - test:
+                compose: << parameters.compose >>
+            - login:
+                login: << parameters.login >>
+            - push:
+                tags: << parameters.tags >>
