@@ -14,15 +14,6 @@ attach_args: &attach_args
   attach: << parameters.attach >>
   attach_at: << parameters.attach_at >>
 
-alpine_params: &alpine_params
-  alpine_version:
-    description: "Alpine version"
-    type: string
-    default: ""
-
-alpine_args: &alpine_args
-  alpine_version: << parameters.alpine_version >>
-
 docker_login_params: &docker_login_params
   login:
     description: "Login command to your repository (using environment variables from your secure context)"
@@ -30,11 +21,6 @@ docker_login_params: &docker_login_params
     default: echo "Login is UNSPECIFIED"
 
 docker_arg_params: &docker_arg_params
-  # Remove this once CircleCI-Public/config-preview-sdk#15 is merged
-  use_args:
-    description: "Enable if you pass args"
-    type: boolean
-    default: false
   args:
     description: "Either none, one or multiple comma-separated Docker build arguments to apply"
     type: string
@@ -74,8 +60,6 @@ docker_tags_params: &docker_tags_params
 
 docker_build_args: &docker_build_args
   <<: *attach_args
-  # Remove this once CircleCI-Public/config-preview-sdk#15 is merged
-  use_args: << parameters.use_args >>
   args: << parameters.args >>
   file: << parameters.file >>
   cache: << parameters.cache >>
@@ -152,9 +136,7 @@ commands:
                   set +o pipefail
                   docker load -i /caches/<< parameters.base_tag >>.tar || true
       - when:
-          condition: << parameters.use_args >>
-          # Use this instead once CircleCI-Public/config-preview-sdk#15 is merged
-          # matches: ['([a-zA-Z][\w]*=[\w-\/.:]+)(,[a-zA-Z][\w]*=[\w-\/.:]+)*', "<< parameters.args >>"]
+          condition: << parameters.args >>
           steps:
             - run:
                 name: Build Docker image with arguments and labels
@@ -168,9 +150,7 @@ commands:
                   build="docker build ${buildarg} --cache-from << parameters.base_tag >> -f << parameters.path >>/<< parameters.file >> -t << parameters.base_tag >> << parameters.path >>"
                   eval $build
       - unless:
-          condition: << parameters.use_args >>
-          # Use this instead once CircleCI-Public/config-preview-sdk#15 is merged
-          # matches: ['([a-zA-Z][\w]*=[\w-\/.:]+)(,[a-zA-Z][\w]*=[\w-\/.:]+)*', "<< parameters.args >>"]
+          condition: << parameters.args >>
           steps:
             - run:
                 name: Build Docker image without arguments and with labels
