@@ -145,9 +145,11 @@ commands:
                   buildarg=""
                   args="<< parameters.args >><<# parameters.add_labels >>,BUILD_DATE=`date -u +\"%Y-%m-%dT%H:%M:%SZ\"`,VCS_REF=`git rev-parse --short HEAD`<</ parameters.add_labels >>"
                   for arg in $args; do
+                    echo "SET ${arg}"
                     buildarg="${buildarg} --build-arg ${arg}"
                   done
                   build="docker build ${buildarg} --cache-from << parameters.base_tag >> -f << parameters.path >>/<< parameters.file >> -t << parameters.base_tag >> << parameters.path >>"
+                  echo $build
                   eval $build
       - unless:
           condition: << parameters.args >>
