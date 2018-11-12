@@ -2,13 +2,16 @@ ARG DOCKER=latest
 FROM docker:${DOCKER}-git
 LABEL maintainer="mat@fax.fyi"
 
-ARG VERSION
-ARG BUILD_DATE
-ARG VCS_REF
+ENV  IFS ","
 
 RUN echo "http://dl-cdn.alpinelinux.org/alpine/edge/main" >> /etc/apk/repositories
 RUN echo "http://dl-cdn.alpinelinux.org/alpine/edge/community" >> /etc/apk/repositories
 RUN echo "http://dl-cdn.alpinelinux.org/alpine/edge/testing" >> /etc/apk/repositories
+
+ARG VERSION
+ARG BUILD_DATE
+ARG VCS_REF
+
 RUN apk upgrade --no-cache --available
 RUN apk add --no-cache git openssh ca-certificates docker-compose
 

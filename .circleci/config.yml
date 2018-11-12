@@ -54,7 +54,7 @@ docker_job: &docker_job
   args: "VERSION=${DOCKER_VERSION},DOCKER=${DOCKER_VERSION}"
 
 workflows:
-  publish:
+  publish_latest_docker:
     jobs:
       - envorb/cmd_version:
           name: set_compose_version
@@ -70,9 +70,8 @@ workflows:
           tags: "gofunky/docker:${DOCKER_VERSION},gofunky/docker:${DOCKER_VERSION}-compose${COMPOSE_VERSION},gofunky/docker:latest"
           login: docker login -u $DOCKER_USR -p $DOCKER_PWD
           cache: true
-          requires:
-            - set_docker_version
-            - set_compose_version
+          requires: [set_docker_version, set_compose_version]
+
       - docker/build_test_push:
           name: build_envload_image
           <<: [*master_filter, *docker_job]
@@ -84,17 +83,14 @@ workflows:
           compose: "./envorb/test/docker-compose.test.yml"
           base_tag: dockertest
           args: "BASE=gofunky/docker:${DOCKER_VERSION}-compose${COMPOSE_VERSION}"
-          requires:
-            - set_docker_version
-            - set_compose_version
-            - build_latest_image
+          requires: [set_docker_version, set_compose_version, build_latest_image]
+
       - docker/build_test:
           name: test_latest
           <<: [*pr_filter, *docker_job]
           tags: "gofunky/docker:${DOCKER_VERSION},gofunky/docker:${DOCKER_VERSION}-compose${COMPOSE_VERSION},gofunky/docker:latest"
-          requires:
-            - set_docker_version
-            - set_compose_version
+          requires: [set_docker_version, set_compose_version]
+
       - docker/build_test:
           name: test_envload
           <<: [*pr_filter, *docker_job]
@@ -104,11 +100,45 @@ workflows:
           compose: "./envorb/test/docker-compose.test.yml"
           base_tag: dockertest
           args: "BASE=gofunky/docker:${DOCKER_VERSION}-compose${COMPOSE_VERSION}"
-          requires:
-            - set_docker_version
-            - set_compose_version
-            - test_latest
+          requires: [set_docker_version, set_compose_version, test_latest]
 
+  build_daily:
+    triggers:
+      - schedule:
+          cron: "0 0 * * *"
+          <<: *master_filter
+    jobs:
+      - envorb/cmd_version:
+          name: set_compose_version
+          <<: *set_compose_version
+
+      - envorb/github:
+          name: set_docker_version
+          <<: *set_docker_version
+
+      - docker/build_test_push:
+          name: build_latest
+          <<: [*master_filter, *docker_job]
+          tags: "gofunky/docker:${DOCKER_VERSION},gofunky/docker:${DOCKER_VERSION}-compose${COMPOSE_VERSION},gofunky/docker:latest,gofunky/docker:stable,gofunky/docker:daily"
+          login: docker login -u $DOCKER_USR -p $DOCKER_PWD
+          cache: true
+          requires: [set_docker_version, set_compose_version]
+
+      - docker/build_test_push:
+          name: build_envload_image
+          <<: [*master_filter, *docker_job]
+          tags: "gofunky/docker:${DOCKER_VERSION}-envload,gofunky/docker:${DOCKER_VERSION}-compose${COMPOSE_VERSION}-envload,gofunky/docker:envload,gofunky/docker:stable-envload"
+          login: docker login -u $DOCKER_USR -p $DOCKER_PWD
+          cache: true
+          add_labels: false
+          path: "./envorb"
+          compose: "./envorb/test/docker-compose.test.yml"
+          base_tag: dockertest
+          args: "BASE=gofunky/docker:${DOCKER_VERSION}-compose${COMPOSE_VERSION}"
+          requires: [set_docker_version, set_compose_version, build_latest_image]
+
+  publish_latest_orb:
+    jobs:
       - orbtools/check:
           name: check_pull_request
           <<: *pr_filter
@@ -130,33 +160,3 @@ workflows:
           context: orb-tools
           <<: *tag_filter
           requires: [release_tag]
-
-  #publish_release:
-  #  jobs:
-  #    - envorb/git_tag:
-  #        name: release_tag
-  #        <<: *tag_filter
-  #        alpine_version: "3.8"
-  #        variable: TAG_VERSION
-  #    - dockerorb/build_test_push:
-  #        name: build_release
-  #        <<: *readmyhub_job
-  #        <<: *tag_filter
-  #        attach: true
-  #        use_args: true
-  #        args: "VERSION=${TAG_VERSION}"
-  #        tags: "gofunky/readmyhub:stable,gofunky/readmyhub:${TAG_VERSION}"
-  #        requires:
-  #          - release_tag
-  #    - dockerorb/build_test_push:
-  #        name: build_git_release
-  #        <<: *readmyhub_job
-  #        <<: *tag_filter
-  #        attach: true
-  #        file: "Dockerfile.git"
-  #        use_args: true
-  #        args: "BASE_VERSION=${TAG_VERSION}"
-  #        tags: "gofunky/readmyhub:stable-git,gofunky/readmyhub:${TAG_VERSION}-git"
-  #        requires:
-  #          - build_release
-  #          - release_tag
