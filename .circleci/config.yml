@@ -2,7 +2,7 @@ version: 2.1
 
 orbs:
   orbtools: gofunky/orbtools@0.1.1
-  envorb: gofunky/envorb@0.3.4
+  envorb: gofunky/envorb@0.3.5
   docker: gofunky/docker@0.0.5
 
 master_filter: &master_filter
