@@ -6,7 +6,7 @@ ARG VERSION
 ARG BUILD_DATE
 ARG VCS_REF
 
-RUN apk add --no-cache --upgrade git openssh ca-certificates docker-compose
+RUN apk add --no-cache --upgrade git openssh ca-certificates docker-compose --repository=http://dl-cdn.alpinelinux.org/alpine/edge/testing/x86_64
 
 LABEL org.label-schema.build-date=$BUILD_DATE \
       org.label-schema.vcs-url="https://github.com/gofunky/docker" \
