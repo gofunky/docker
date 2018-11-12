@@ -32,7 +32,7 @@ set_compose_version: &set_compose_version
     - run:
         name: Install docker-compose
         command: |
-          apk add --no-cache --upgrade docker-compose --repository=http://dl-cdn.alpinelinux.org/alpine/edge/testing/x86_64
+          apk add --no-cache --upgrade docker-compose --repository=http://dl-cdn.alpinelinux.org/alpine/edge/testing
   cmd: docker-compose version
 
 set_docker_version: &set_docker_version
