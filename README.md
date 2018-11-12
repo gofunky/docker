@@ -1,7 +1,7 @@
 # docker
 alpine docker image with git, docker and compose
 
-[![Codacy Badge](https://api.codacy.com/project/badge/Grade/ae28f78d89554f5f8a5d48a9fb6a9fff)](https://app.codacy.com/app/gofunky/git?utm_source=github.com&utm_medium=referral&utm_content=gofunky/git&utm_campaign=Badge_Grade_Settings)
+[![Codacy Badge](https://api.codacy.com/project/badge/Grade/ccc38958460249178124167e4a54908c)](https://www.codacy.com/app/gofunky/docker?utm_source=github.com&amp;utm_medium=referral&amp;utm_content=gofunky/docker&amp;utm_campaign=Badge_Grade)
 [![Dependabot Status](https://api.dependabot.com/badges/status?host=github&repo=gofunky/docker)](https://dependabot.com)
 [![CircleCI](https://circleci.com/gh/gofunky/docker/tree/master.svg?style=shield)](https://circleci.com/gh/gofunky/docker/tree/master)
 [![Microbadger Version](https://images.microbadger.com/badges/version/gofunky/docker.svg)](https://microbadger.com/images/gofunky/docker "Docker Version")
