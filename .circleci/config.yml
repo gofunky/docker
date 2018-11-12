@@ -46,7 +46,7 @@ set_docker_version: &set_docker_version
 
 docker_job: &docker_job
   attach: true
-  compose: ./test/docker-compose.test.yml
+  compose: docker-compose.test.yml
   base_tag: funkydocker
   add_labels: true
   docker_version: 18.09.0
