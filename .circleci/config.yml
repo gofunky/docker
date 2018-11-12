@@ -65,7 +65,7 @@ workflows:
           <<: *set_docker_version
 
       - docker/build_test_push:
-          name: build_latest
+          name: build_latest_image
           <<: [*master_filter, *docker_job]
           tags: "gofunky/docker:${DOCKER_VERSION},gofunky/docker:${DOCKER_VERSION}-compose${COMPOSE_VERSION},gofunky/docker:latest"
           login: docker login -u $DOCKER_USR -p $DOCKER_PWD
@@ -74,7 +74,7 @@ workflows:
             - set_docker_version
             - set_compose_version
       - docker/build_test_push:
-          name: build_envload
+          name: build_envload_image
           <<: [*master_filter, *docker_job]
           tags: "gofunky/docker:${DOCKER_VERSION}-envload,gofunky/docker:${DOCKER_VERSION}-compose${COMPOSE_VERSION}-envload,gofunky/docker:envload"
           login: docker login -u $DOCKER_USR -p $DOCKER_PWD
@@ -87,7 +87,7 @@ workflows:
           requires:
             - set_docker_version
             - set_compose_version
-            - build_latest
+            - build_latest_image
       - docker/build_test:
           name: test_latest
           <<: [*pr_filter, *docker_job]
@@ -114,7 +114,7 @@ workflows:
           <<: *pr_filter
 
       - orbtools/env-pack-publish:
-          name: publish_latest
+          name: publish_latest_orb
           context: orb-tools
           version: "dev:${CIRCLE_BRANCH}"
           <<: *master_filter
@@ -126,7 +126,7 @@ workflows:
           <<: *tag_filter
 
       - orbtools/env-pack-publish:
-          name: publish_release
+          name: publish_release_orb
           context: orb-tools
           <<: *tag_filter
           requires: [release_tag]
