@@ -35,7 +35,8 @@ set_compose_version: &set_compose_version
           echo "http://dl-cdn.alpinelinux.org/alpine/edge/main" >> /etc/apk/repositories
           echo "http://dl-cdn.alpinelinux.org/alpine/edge/community" >> /etc/apk/repositories
           echo "http://dl-cdn.alpinelinux.org/alpine/edge/testing" >> /etc/apk/repositories
-          apk add --no-cache --upgrade docker-compose
+          apk upgrade --no-cache --available
+          apk add --no-cache docker-compose
   cmd: docker-compose version
 
 set_docker_version: &set_docker_version
