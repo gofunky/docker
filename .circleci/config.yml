@@ -117,7 +117,7 @@ workflows:
           <<: *set_docker_version
 
       - docker/build_test_push:
-          name: build_latest
+          name: build_latest_image
           <<: [*master_filter, *docker_job]
           tags: "gofunky/docker:${DOCKER_VERSION},gofunky/docker:${DOCKER_VERSION}-compose${COMPOSE_VERSION},gofunky/docker:latest,gofunky/docker:stable,gofunky/docker:daily"
           login: docker login -u $DOCKER_USR -p $DOCKER_PWD
