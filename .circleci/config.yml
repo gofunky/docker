@@ -3,6 +3,7 @@ version: 2.1
 orbs:
   orbtools: gofunky/orbtools@0.1.1
   envorb: gofunky/envorb@0.3.2
+  docker: gofunky/docker@0.0.5
 
 master_filter: &master_filter
   filters:
@@ -23,9 +24,87 @@ pr_filter: &pr_filter
       ignore:
         - master
 
+set_compose_version: &set_compose_version
+  attach: true
+  alpine_version: "3.8"
+  variable: COMPOSE_VERSION
+  prepare:
+    - run:
+        name: Install docker-compose
+        command: |
+          apk add --no-cache --upgrade docker-compose
+  cmd: docker-compose version
+
+set_docker_version: &set_docker_version
+  alpine_version: "3.8"
+  variable: DOCKER_VERSION
+  repository: "docker/docker-ce"
+
+docker_job: &docker_job
+  attach: true
+  compose: ./test/docker-compose.test.yml
+  base_tag: funkydocker
+  add_labels: true
+  docker_version: 18.09.0
+  context: docker-hub
+  args: "VERSION=${DOCKER_VERSION},DOCKER=${DOCKER_VERSION}"
+
 workflows:
   publish:
     jobs:
+      - envorb/cmd_version:
+          name: set_compose_version
+          <<: *set_compose_version
+
+      - envorb/github:
+          name: set_docker_version
+          <<: *set_docker_version
+
+      - docker/build_test_push:
+          name: build_latest
+          <<: [*master_filter, *docker_job]
+          tags: "gofunky/docker:${DOCKER_VERSION},gofunky/docker:${DOCKER_VERSION}-compose${COMPOSE_VERSION},gofunky/docker:latest"
+          login: docker login -u $DOCKER_USR -p $DOCKER_PWD
+          cache: true
+          requires:
+            - set_docker_version
+            - set_compose_version
+      - docker/build_test_push:
+          name: build_envload
+          <<: [*master_filter, *docker_job]
+          tags: "gofunky/docker:${DOCKER_VERSION}-envload,gofunky/docker:${DOCKER_VERSION}-compose${COMPOSE_VERSION}-envload,gofunky/docker:envload"
+          login: docker login -u $DOCKER_USR -p $DOCKER_PWD
+          cache: true
+          add_labels: false
+          path: "./envorb"
+          compose: "./envorb/test/docker-compose.test.yml"
+          base_tag: dockertest
+          args: "BASE=gofunky/docker:${DOCKER_VERSION}-compose${COMPOSE_VERSION}"
+          requires:
+            - set_docker_version
+            - set_compose_version
+            - build_latest
+      - docker/build_test:
+          name: test_latest
+          <<: [*pr_filter, *docker_job]
+          tags: "gofunky/docker:${DOCKER_VERSION},gofunky/docker:${DOCKER_VERSION}-compose${COMPOSE_VERSION},gofunky/docker:latest"
+          requires:
+            - set_docker_version
+            - set_compose_version
+      - docker/build_test:
+          name: test_envload
+          <<: [*pr_filter, *docker_job]
+          tags: "gofunky/docker:${DOCKER_VERSION}-envload,gofunky/docker:${DOCKER_VERSION}-compose${COMPOSE_VERSION}-envload,gofunky/docker:envload"
+          add_labels: false
+          path: "./envorb"
+          compose: "./envorb/test/docker-compose.test.yml"
+          base_tag: dockertest
+          args: "BASE=gofunky/docker:${DOCKER_VERSION}-compose${COMPOSE_VERSION}"
+          requires:
+            - set_docker_version
+            - set_compose_version
+            - test_latest
+
       - orbtools/check:
           name: check_pull_request
           <<: *pr_filter
