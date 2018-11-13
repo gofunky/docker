@@ -13,7 +13,7 @@ ARG BUILD_DATE
 ARG VCS_REF
 
 RUN apk upgrade --no-cache --available
-RUN apk add --no-cache git openssh ca-certificates docker-compose
+RUN apk add --no-cache git openssh ca-certificates docker-compose grep
 
 LABEL org.label-schema.build-date=$BUILD_DATE \
       org.label-schema.vcs-url="https://github.com/gofunky/docker" \
