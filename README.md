@@ -1,5 +1,6 @@
 # docker
-alpine docker image with git, docker and compose
+
+An alpine docker image containing git, docker and compose.
 
 [![Codacy Badge](https://api.codacy.com/project/badge/Grade/ccc38958460249178124167e4a54908c)](https://www.codacy.com/app/gofunky/docker?utm_source=github.com&amp;utm_medium=referral&amp;utm_content=gofunky/docker&amp;utm_campaign=Badge_Grade)
 [![Dependabot Status](https://api.dependabot.com/badges/status?host=github&repo=gofunky/docker)](https://dependabot.com)
