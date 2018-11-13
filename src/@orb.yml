@@ -198,7 +198,7 @@ commands:
       - run:
           name: Install Docker Compose
           command: |
-            if [ ! -e "/usr/local/bin/docker-compose" ]; then
+            if ! [ -x "$(command -v docker-compose)" ]; then
               echo "Installing latest Docker Compose..."
               apk add --no-cache py-pip
               pip install docker-compose
