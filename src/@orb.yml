@@ -90,7 +90,7 @@ executors:
     parameters:
       <<: *docker_version_params
     docker:
-      - image: gofunky/docker:<< parameters.docker_version >>-envorb
+      - image: gofunky/docker:<< parameters.docker_version >>-envload
 
 commands:
   login:
