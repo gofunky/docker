@@ -24,9 +24,12 @@ pr_filter: &pr_filter
       ignore:
         - master
 
+use_alpine_version: &use_alpine_version
+  alpine_version: "3.8"
+
 set_compose_version: &set_compose_version
   attach: true
-  alpine_version: "3.8"
+  <<: *use_alpine_version
   variable: COMPOSE_VERSION
   prepare:
     - run:
@@ -40,7 +43,7 @@ set_compose_version: &set_compose_version
   cmd: docker-compose version
 
 set_docker_version: &set_docker_version
-  alpine_version: "3.8"
+  <<: *use_alpine_version
   variable: DOCKER_VERSION
   repository: "docker/docker-ce"
 
@@ -140,22 +143,21 @@ workflows:
     jobs:
       - orbtools/check:
           name: check_pull_request
-          <<: *pr_filter
+          <<: [*pr_filter, *use_alpine_version]
 
       - orbtools/env-pack-publish:
           name: publish_latest_orb
           context: orb-tools
           version: "dev:${CIRCLE_BRANCH}"
-          <<: *master_filter
+          <<: [*master_filter, *use_alpine_version]
 
       - envorb/git_tag:
           name: release_tag
-          alpine_version: "3.8"
           variable: ORB_PUBLISHING_VERSION
-          <<: *tag_filter
+          <<: [*tag_filter, *use_alpine_version]
 
       - orbtools/env-pack-publish:
           name: publish_release_orb
           context: orb-tools
-          <<: *tag_filter
+          <<: [*tag_filter, *use_alpine_version]
           requires: [release_tag]
