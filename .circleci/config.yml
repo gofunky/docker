@@ -1,9 +1,10 @@
 version: 2.1
 
 orbs:
-  orbtools: gofunky/orbtools@0.2.1
-  envorb: gofunky/envorb@0.3.5
+  orbtools: gofunky/orbtools@0.3.2
+  envorb: gofunky/envorb@0.3.9
   docker: gofunky/docker@0.1.2
+  readmyhub: gofunky/readmyhub@1.2.2
 
 master_filter: &master_filter
   filters:
@@ -56,6 +57,13 @@ docker_job: &docker_job
   args: "VERSION=${DOCKER_VERSION},DOCKER=${DOCKER_VERSION}"
 
 workflows:
+  readme:
+    jobs:
+      - readmyhub/update:
+          name: update_readme
+          <<: *master_filter
+          context: docker-hub
+
   publish_latest_docker:
     jobs:
       - envorb/cmd_version:
