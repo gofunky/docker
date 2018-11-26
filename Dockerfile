@@ -2,6 +2,8 @@ ARG DOCKER=latest
 FROM docker:${DOCKER}-git
 LABEL maintainer="mat@fax.fyi"
 
+ENV  IFS ","
+
 RUN echo "http://dl-cdn.alpinelinux.org/alpine/edge/main" >> /etc/apk/repositories
 RUN echo "http://dl-cdn.alpinelinux.org/alpine/edge/community" >> /etc/apk/repositories
 RUN echo "http://dl-cdn.alpinelinux.org/alpine/edge/testing" >> /etc/apk/repositories
