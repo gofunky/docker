@@ -1,0 +1,18 @@
+description: >
+  This command adds additional tags to the Docker image of the provided base tag.
+  First, the environment variables for the Docker organization and repository are set.
+  Second,
+  Add additional tags to the Docker image with the provided base tag.
+
+steps:
+  - dockerhub-vars:
+      organization: << parameters.organization >>
+      repository: << parameters.repository >>
+  - run:
+      name: add Docker tags
+      command: |
+        source /usr/local/bin/envload
+        tags="<< parameters.tags >>"
+        for TAG in $tags; do
+          docker tag << parameters.base-tag >> "<< parameters.tag-structure >>"
+        done

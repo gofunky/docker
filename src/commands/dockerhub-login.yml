@@ -1,0 +1,21 @@
+description: >
+  Login to your Docker Hub account using the environment variables `DOCKER_USR` and `DOCKER_PWD`.
+
+steps:
+  - run:
+      name: check DOCKER_USR
+      command: |
+        if [ -z "$DOCKER_USR" ]; then
+          echo "ERROR: DOCKER_USR is not set!"
+          exit 127
+        fi
+  - run:
+      name: check DOCKER_PWD
+      command: |
+        if [ -z "$DOCKER_PWD" ]; then
+          echo "ERROR: DOCKER_PWD is not set!"
+          exit 127
+        fi
+  - run:
+      name: login to Docker Hub
+      command: docker login -u $DOCKER_USR -p $DOCKER_PWD

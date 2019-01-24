@@ -1,0 +1,9 @@
+description: >
+  Perform Docker image tests as defined in the given compose test file.
+
+steps:
+  - run:
+      name: run Docker compose tests
+      command: |
+        source /usr/local/bin/envload
+        docker-compose -f "<< parameters.compose-file >>" up --exit-code-from sut --build --abort-on-container-exit

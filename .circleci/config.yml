@@ -1,8 +1,8 @@
 version: 2.1
 
 orbs:
-  orbtools: gofunky/orbtools@0.3.2
-  envorb: gofunky/envorb@0.3.9
+  orbtools: gofunky/orbtools@0.4.0
+  envorb: gofunky/envorb@0.3.10
   docker: gofunky/docker@0.1.2
   readmyhub: gofunky/readmyhub@1.2.2
 
@@ -50,8 +50,8 @@ set_docker_version: &set_docker_version
 
 docker_job: &docker_job
   attach: true
-  base_tag: funkydocker
-  add_labels: true
+  base-tag: funkydocker
+  add-labels: true
   docker_version: 18.09.0
   context: docker-hub
   args: "VERSION=${DOCKER_VERSION},DOCKER=${DOCKER_VERSION}"
@@ -88,10 +88,10 @@ workflows:
           tags: "gofunky/docker:${DOCKER_VERSION}-envload,gofunky/docker:${DOCKER_VERSION}-compose${COMPOSE_VERSION}-envload,gofunky/docker:envload"
           login: docker login -u $DOCKER_USR -p $DOCKER_PWD
           cache: true
-          add_labels: false
+          add-labels: false
           path: "./envorb"
           compose: "./envorb/test/docker-compose.test.yml"
-          base_tag: dockertest
+          base-tag: dockertest
           args: "BASE=gofunky/docker:${DOCKER_VERSION}-compose${COMPOSE_VERSION}"
           requires: [set_docker_version, set_compose_version, build_latest_image]
 
@@ -105,10 +105,10 @@ workflows:
           name: test_envload
           <<: [*pr_filter, *docker_job]
           tags: "gofunky/docker:${DOCKER_VERSION}-envload,gofunky/docker:${DOCKER_VERSION}-compose${COMPOSE_VERSION}-envload,gofunky/docker:envload"
-          add_labels: false
+          add-labels: false
           path: "./envorb"
           compose: "./envorb/test/docker-compose.test.yml"
-          base_tag: dockertest
+          base-tag: dockertest
           args: "BASE=gofunky/docker:${DOCKER_VERSION}-compose${COMPOSE_VERSION}"
           requires: [set_docker_version, set_compose_version, test_latest]
 
@@ -140,10 +140,10 @@ workflows:
           tags: "gofunky/docker:${DOCKER_VERSION}-envload,gofunky/docker:${DOCKER_VERSION}-compose${COMPOSE_VERSION}-envload,gofunky/docker:envload,gofunky/docker:stable-envload"
           login: docker login -u $DOCKER_USR -p $DOCKER_PWD
           cache: true
-          add_labels: false
+          add-labels: false
           path: "./envorb"
           compose: "./envorb/test/docker-compose.test.yml"
-          base_tag: dockertest
+          base-tag: dockertest
           args: "BASE=gofunky/docker:${DOCKER_VERSION}-compose${COMPOSE_VERSION}"
           requires: [set_docker_version, set_compose_version, build_latest_image]
 
@@ -156,7 +156,7 @@ workflows:
       - orbtools/env-pack-publish:
           name: publish_latest_orb
           context: orb-tools
-          version: "dev:${CIRCLE_BRANCH}"
+          version: "dev:${CIRCLE_BUILD_NUM}"
           <<: [*master_filter, *use_alpine_version]
 
       - envorb/git_tag:

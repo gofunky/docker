@@ -1,0 +1,53 @@
+description: >
+  Build the Docker image.
+
+steps:
+  - when:
+      condition: << parameters.cache >>
+      steps:
+        - restore_cache:
+            keys:
+              - docker-<< parameters.path >>-<< parameters.file >>-<< parameters.base-tag >>-{{ .Branch }}
+            paths:
+              - /caches/<< parameters.base-tag >>.tar
+        - run:
+            name: load Docker image layer cache
+            command: |
+              set +o pipefail
+              docker load -i /caches/<< parameters.base-tag >>.tar || true
+  - when:
+      condition: << parameters.args >>
+      steps:
+        - run:
+            name: build the Docker image with arguments<<# parameters.add-labels >> and with labels<</ parameters.add-labels >>
+            command: |
+              source /usr/local/bin/envload
+              buildarg=""
+              args="<< parameters.args >><<# parameters.add-labels >>,BUILD_DATE=`date -u +\"%Y-%m-%dT%H:%M:%SZ\"`,VCS_REF=`git rev-parse --short HEAD`<</ parameters.add-labels >>"
+              for arg in $args; do
+                echo "SET ${arg}"
+                buildarg="${buildarg} --build-arg ${arg}"
+              done
+              build="docker build ${buildarg} --cache-from << parameters.base-tag >> -f << parameters.path >>/<< parameters.file >> -t << parameters.base-tag >> << parameters.path >>"
+              echo $build
+              eval $build
+  - unless:
+      condition: << parameters.args >>
+      steps:
+        - run:
+            name: build the Docker image without arguments<<# parameters.add-labels >> and with labels<</ parameters.add-labels >>
+            command: |
+              source /usr/local/bin/envload
+              docker build <<# parameters.add-labels >>--build-arg BUILD_DATE=`date -u +\"%Y-%m-%dT%H:%M:%SZ\"` --build-arg VCS_REF=`git rev-parse --short HEAD` <</ parameters.add-labels >>--cache-from << parameters.base-tag >> -f << parameters.path >>/<< parameters.file >> -t << parameters.base-tag >> << parameters.path >>
+  - when:
+      condition: << parameters.cache >>
+      steps:
+        - run:
+            name: sve Docker image layer cache
+            command: |
+              mkdir -p /caches
+              docker save -o /caches/<< parameters.base-tag >>.tar << parameters.base-tag >>
+        - save_cache:
+            key: docker-<< parameters.path >>-<< parameters.file >>-<< parameters.base-tag >>-{{ .Branch }}-{{ epoch }}
+            paths:
+              - /caches/<< parameters.base-tag >>.tar

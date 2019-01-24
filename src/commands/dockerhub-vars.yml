@@ -1,0 +1,27 @@
+description: >
+  Sets the environment variables `DOCKERHUB_ORG` and `DOCKERHUB_REPO` from the given parameters
+  or, as default, from the detected git repository.
+
+steps:
+  - when:
+      condition: << parameters.organization >>
+      steps:
+        - envorb/value:
+            variable: DOCKERHUB_ORG
+            value: << parameters.organization >>
+  - unless:
+      condition: << parameters.organization >>
+      steps:
+        - envorb/git_org:
+            variable: DOCKERHUB_ORG
+  - when:
+      condition: << parameters.repository >>
+      steps:
+        - envorb/value:
+            variable: DOCKERHUB_REPO
+            value: << parameters.repository >>
+  - unless:
+      condition: << parameters.repository >>
+      steps:
+        - envorb/git_name:
+            variable: DOCKERHUB_REPO

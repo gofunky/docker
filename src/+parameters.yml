@@ -1,0 +1,76 @@
+docker-version:
+  description: Docker version
+  type: string
+  default: stable
+
+login:
+  description: login command to your repository (using environment variables from your secure context)
+  type: steps
+  default:
+    - dockerhub-login
+
+args:
+  description: either none, one or multiple comma-separated Docker build arguments to apply
+  type: string
+  default: ""
+
+attach:
+  description: attach workspace
+  type: boolean
+  default: false
+
+attach-at:
+  description: where to attach the workspace
+  type: string
+  default: "."
+
+file:
+  description: path to the Dockerfile
+  type: string
+  default: "Dockerfile"
+cache:
+  description: use image layer cache
+  type: boolean
+  default: false
+prepare:
+  description: prepare steps after checkout (e.g., chmod)
+  type: steps
+  default: []
+path:
+  description: build path
+  type: string
+  default: "."
+add-labels:
+  description: ddd default schema labels
+  type: boolean
+  default: false
+
+base-tag:
+  description: Docker base tag to use
+  type: string
+  default: app
+
+tags:
+  description: comma-separated, either unversioned tags (e.g., latest), or versioned tags (e.g., dependency:${VERSION})
+  type: string
+  default: "latest"
+
+compose-file:
+  description: path to the docker compose test file to test
+  type: string
+  default: "docker-compose.test.yml"
+
+organization:
+  description: your repository organization name, defaults to the detected git organization
+  type: string
+  default: ""
+
+repository:
+  description: your repository name, defaults to the detected git repository name
+  type: string
+  default: ""
+
+tag-format:
+  description: the target repository tagging format, defaults to the Docker Hub format
+  type: string
+  default: "${DOCKERHUB_ORG}/${DOCKERHUB_REPO}:$TAG"

@@ -1,0 +1,10 @@
+description: >
+  This command creates tag tuples from the given set of tag vectors and stores it in an environment variable.
+  Moreover, referenced semantic versions are split and considered as separate elements.
+  For instance, `docker:{DOCKER_VERSION}` with `DOCKER_VERSION` equalling to `18.09.0` resolves to
+  `docker, docker18, docker18.09, docker18.09.0`.
+
+steps:
+  - envorb/cmd:
+      variable: DOCKER_TAGS
+      cmd: echo "<< parameters.tags >>" | tuplip exec

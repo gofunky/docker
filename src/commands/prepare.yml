@@ -1,0 +1,24 @@
+description: >
+  Prepare the workspace for Docker.
+
+steps:
+  - checkout
+  - setup_remote_docker
+  - run:
+      name: check for submodules
+      command: |
+        if [ -e "./.gitmodules" ]; then
+          echo "Checking out detected submodules..."
+          git submodule sync
+          git submodule update --init
+        else
+          echo "SKIPPING..."
+        fi
+  - when:
+      condition: << parameters.attach >>
+      steps:
+        - attach_workspace:
+            at: << parameters.attach-at >>
+  - install
+  - envorb/install
+  - steps: << parameters.prepare >>

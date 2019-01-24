@@ -1,0 +1,14 @@
+description: >
+  Install Docker Compose if it is not yet installed.
+
+steps:
+  - run:
+      name: install Docker Compose if it does not exist
+      command: |
+        if ! [ -x "$(command -v docker-compose)" ]; then
+          echo "Installing latest Docker Compose..."
+          apk add --no-cache py-pip
+          pip install docker-compose
+        else
+          echo "SKIPPING..."
+        fi

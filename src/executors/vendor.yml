@@ -1,0 +1,8 @@
+description: >
+  The vendor Docker image as it including git only.
+
+docker:
+  - image: docker:<< parameters.docker-version >>-git
+  working_directory: ~/app
+  environment:
+    IFS: ","

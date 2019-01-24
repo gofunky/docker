@@ -1,0 +1,5 @@
+description: >
+  The custom version of the Docker image that contains git, compose, and envload.
+
+docker:
+  - image: gofunky/docker:<< parameters.docker-version >>-envload

@@ -1,0 +1,28 @@
+description: >
+  First, this job builds the given Docker image using under the base tag.
+  If tags are given besides the base tag, the build will attempt to push the Docker image using ghe given tags.
+  Use the test parameter to schedule a test run after the build using compose.
+
+executor:
+  name: default
+  docker-version: << parameters.docker-version >>
+
+steps:
+  - prepare:
+      attach: << parameters.attach >>
+      attach-at: << parameters.attach-at >>
+      prepare: << parameters.prepare >>
+  - build:
+      args: << parameters.args >>
+      file: << parameters.file >>
+      cache: << parameters.cache >>
+      path: << parameters.path >>
+      base-tag: << parameters.base-tag >>
+      add-labels: << parameters.add-labels >>
+  - test:
+      compose-file: << parameters.compose-file >>
+  - tag:
+      tags: << parameters.tags >>
+      base-tag: << parameters.base-tag >>
+  - push:
+      login: << parameters.login >>

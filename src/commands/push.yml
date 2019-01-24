@@ -1,0 +1,13 @@
+description: >
+  Push the Docker image using the provided tags.
+
+steps:
+  - steps: << parameters.login >>
+  - run:
+      name: push the Docker image for the provided tags
+      command: |
+        source /usr/local/bin/envload
+        tags="<< parameters.tags >>"
+        for TAG in $tags; do
+          docker push "<< parameters.tag-structure >>"
+        done
